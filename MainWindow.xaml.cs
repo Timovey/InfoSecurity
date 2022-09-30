@@ -47,7 +47,15 @@ namespace InfoSecurity1
                 MessageBox.Show("Введите новый пароль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            if (!User.Password.Equals(TextBoxOldPassword.Password)) {
+            //проверка в бизнес логике, на то, что хеши сходятся
+            var userMatch= _userLogic.MatchPassword(new User
+            {
+                Login = User.Login,
+                Blocked = User.Blocked,
+                RestrictionPassword = User.RestrictionPassword,
+                Password = TextBoxOldPassword.Password
+            });
+            if (userMatch == null) {
                 MessageBox.Show("Старый пароль неверен", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }

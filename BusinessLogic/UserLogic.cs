@@ -8,6 +8,7 @@ using InfoSecurity1.BusinessLogic.Helpers;
 using Unity;
 using System.Text.RegularExpressions;
 using System.Windows.Controls.Primitives;
+using System.Security.Cryptography;
 
 namespace InfoSecurity1.BusinessLogic
 {
@@ -19,6 +20,11 @@ namespace InfoSecurity1.BusinessLogic
         private List<User> users = new List<User>();
         private User Admin;
         private CryptoHelper helper;
+        private SHA256CryptoServiceProvider hashProvider;
+        /// <summary>
+        /// соль для хеширования
+        /// </summary>
+        byte[] Salt = Encoding.UTF8.GetBytes("abvvfghq");
         /// <summary>
         /// строка - регулярное выражение для ограничения на пароль
         /// </summary>
@@ -26,6 +32,7 @@ namespace InfoSecurity1.BusinessLogic
         public UserLogic(CryptoHelper _helper)
         {
             helper = _helper;
+            hashProvider = new SHA256CryptoServiceProvider();
             //получаем всех юзеров в конструкторе
             LoadData();
         }
@@ -33,11 +40,10 @@ namespace InfoSecurity1.BusinessLogic
         {
             if(user == null) return false;
 
-            return user.Login.Equals(Admin.Login) && user.Password.Equals(Admin.Password);
+            return user.Login.Equals(Admin.Login) && HashPassword(user.Password).Equals(Admin.Password);
         }
         public bool IsPasswordEmpty(string login)
         {
-            bool isEmpty = false;
             foreach(var u in users)
             {
                 if (login.Equals(u.Login) && u.Password.Equals(""))
@@ -49,7 +55,18 @@ namespace InfoSecurity1.BusinessLogic
                     return false;
                 }
             }
-            return isEmpty;
+            return false;
+        }
+        public bool IsExistUser(string login)
+        {
+            foreach (var u in users)
+            {
+                if (u.Login.Equals(login))
+                {
+                    return true;
+                }
+            }
+            return false;
         }
         private User GetUserByLogin(string login)
         {
@@ -64,8 +81,9 @@ namespace InfoSecurity1.BusinessLogic
         }
         public User ChangePassword(User user)
         {
+            User u = GetUserByLogin(user.Login);
 
-            if(!user.RestrictionPassword)
+            if (!u.RestrictionPassword)
             {
                 EditUser(user);
                 return GetUserByLogin(user.Login);
@@ -77,7 +95,7 @@ namespace InfoSecurity1.BusinessLogic
                     return null;                }
                 else
                 {
-                    helper.EditUser(user);
+                    EditUser(user);
                     return GetUserByLogin(user.Login);
                 }
             }
@@ -86,19 +104,23 @@ namespace InfoSecurity1.BusinessLogic
         // метод для сравнивания паролей
         public User MatchPassword(User user)
         {
-            if(user.Blocked)
+            User u = GetUserByLogin(user.Login);
+            if(u == null)
+            {
+                throw new Exception("Нет пользователя с таким логином");
+            }
+            if(u.Blocked)
             {
                 throw new Exception("Ваши функции заблокированы");
             }
             else
             {
-                User u = GetUserByLogin(user.Login);
                 //если пароля не было и нет ограничений - редактируем пользователя
                 if (string.IsNullOrEmpty(u.Password) && !u.RestrictionPassword)
                 {
                     user.RestrictionPassword = u.RestrictionPassword;
                     user.Blocked = u.Blocked;
-                    helper.EditUser(user);
+                    EditUser(user);
                     return user;
                 }
                 //если пароля не было и есть ограничения
@@ -106,18 +128,19 @@ namespace InfoSecurity1.BusinessLogic
                 {
                     if (!Regex.IsMatch(user.Password, regex))
                     {
-                        throw new Exception("Пароль должен состоять из символов латиницы, кириллицы и знаков операций");
+                        throw new RegexExeption("Пароль должен состоять из символов латиницы, кириллицы и знаков операций");
                     }
                     else {
                         user.RestrictionPassword = u.RestrictionPassword;
                         user.Blocked = u.Blocked;
-                        helper.EditUser(user);
+                        EditUser(user);
                         return user;
                     }
                 }
                 else
                 {
-                    return u.Password.Equals(user.Password) ? user : null; 
+                    //проверяем хешированные пароли
+                    return u.Password.Equals(HashPassword(user.Password)) ? user : null; 
                 }  
                 
             }
@@ -142,13 +165,24 @@ namespace InfoSecurity1.BusinessLogic
             helper.AddUser(user);
             LoadData();
         }
-        public void EditUser(User user)
+        public void EditUser(User user, bool IsChahgePassword = true)
         {
             if(user == null)
             {
                 throw new Exception("Нет пользователя для редактирования");
             }
-            helper.EditUser(user);
+            if (string.IsNullOrEmpty(user.Password))
+            {
+                helper.EditUser(user);
+            }
+            else if (!IsChahgePassword)
+            {
+                helper.EditUser(user);
+            }
+            else
+            {
+                helper.EditUser(HashPassword(user));
+            }
             LoadData();
         }
         private void LoadData()
@@ -162,6 +196,36 @@ namespace InfoSecurity1.BusinessLogic
                     Admin = u;
                 }
             }
+        }
+        //методы для хеширования паролей
+        private User HashPassword(User user)
+        {
+            byte[] passwordBytes = Encoding.UTF8.GetBytes(user.Password);
+
+            byte[] saltedInput = new byte[Salt.Length + passwordBytes.Length];
+            Salt.CopyTo(saltedInput, 0);
+            passwordBytes.CopyTo(saltedInput, Salt.Length);
+
+            byte[] hashedBytes = hashProvider.ComputeHash(saltedInput);
+
+            user.Password = BitConverter.ToString(hashedBytes);
+
+            return user;
+        }
+        //получаем байтовое представление пароля
+        //получаем "соль" и совмещаем массивы байтов
+        //возвращаем строковое представление
+        private string HashPassword(string password)
+        {
+            byte[] passwordBytes = Encoding.UTF8.GetBytes(password);
+
+            byte[] saltedInput = new byte[Salt.Length + passwordBytes.Length];
+            Salt.CopyTo(saltedInput, 0);
+            passwordBytes.CopyTo(saltedInput, Salt.Length);
+
+            byte[] hashedBytes = hashProvider.ComputeHash(saltedInput);
+
+            return BitConverter.ToString(hashedBytes);
         }
         //при уничтожении класса зашифрует всех пользователей
         ~UserLogic()

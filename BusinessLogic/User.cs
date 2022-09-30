@@ -12,6 +12,7 @@ namespace InfoSecurity1.BusinessLogic
         /// <summary>
         /// Пароль пользователя
         /// </summary>
+        [DisplayName("Пароль")]
         public string Password { get; set; }
         /// <summary>
         /// Ограничения на пароль

@@ -40,6 +40,11 @@ namespace InfoSecurity1
                 MessageBox.Show("Заполните логин", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
+            if(!_userLogic.IsExistUser(TextBoxLogin.Text))
+            {
+                MessageBox.Show("Нет пользователя с таким логином", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             if (string.IsNullOrEmpty(TextBoxPassword.Password))
             {
                 MessageBox.Show("Заполните пароль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -50,7 +55,11 @@ namespace InfoSecurity1
                 MessageBox.Show("Повторите пароль", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
                 return;
             }
-            
+            if (TextBoxPasswordRetype.Visibility == Visibility.Visible && !TextBoxPasswordRetype.Password.Equals(TextBoxPassword.Password))
+            {
+                MessageBox.Show("Пароли не совпадают", "Ошибка", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
             try
             {
                 var user = new User
@@ -67,7 +76,7 @@ namespace InfoSecurity1
                     TextBoxLogin.Clear();
                     TextBoxPassword.Clear();
                     TextBoxPasswordRetype.Clear();
-                               Close();
+                    Close();
                 }
                 else
                 {
@@ -78,6 +87,14 @@ namespace InfoSecurity1
                         DialogResult = false;
                         Close();
                     }
+                }
+            }
+            catch (RegexExeption ex)
+            {
+                var mb = MessageBox.Show(ex.Message, "Ошибка", MessageBoxButton.OKCancel, MessageBoxImage.Error);
+                if(mb.Equals(MessageBoxResult.Cancel))
+                {
+                    Close();
                 }
             }
             catch (Exception ex)

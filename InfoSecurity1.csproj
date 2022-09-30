@@ -94,6 +94,7 @@
     <Compile Include="AddUserWindow.xaml.cs">
       <DependentUpon>AddUserWindow.xaml</DependentUpon>
     </Compile>
+    <Compile Include="BusinessLogic\RegexExeption.cs" />
     <Compile Include="RefWindow.xaml.cs">
       <DependentUpon>RefWindow.xaml</DependentUpon>
     </Compile>
@@ -120,7 +121,6 @@
       <DependentUpon>AuthWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="BusinessLogic\Helpers\CryptoHelper.cs" />
-    <Compile Include="BusinessLogic\Helpers\FileHelper.cs" />
     <Compile Include="BusinessLogic\Helpers\Serializer.cs" />
     <Compile Include="BusinessLogic\User.cs" />
     <Compile Include="BusinessLogic\UserLogic.cs" />

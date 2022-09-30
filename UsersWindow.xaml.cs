@@ -46,7 +46,7 @@ namespace InfoSecurity1
                         var cellInfo = dataGridUsers.SelectedCells[0];
                         User content = (User)(cellInfo.Item);
                         content.Blocked = true;
-                        _userLogic.EditUser(content);
+                        _userLogic.EditUser(content, false);
 
                     }
                     catch (Exception ex)
@@ -72,7 +72,7 @@ namespace InfoSecurity1
                         var cellInfo = dataGridUsers.SelectedCells[0];
                         User content = (User)(cellInfo.Item);
                         content.RestrictionPassword = true;
-                        _userLogic.EditUser(content);
+                        _userLogic.EditUser(content, false);
 
                     }
                     catch (Exception ex)
