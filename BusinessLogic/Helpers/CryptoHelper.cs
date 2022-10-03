@@ -50,7 +50,9 @@ namespace InfoSecurity1.BusinessLogic.Helpers
                 
                 //считываем данные из зашифрованного файла во временный, используя ключ и вектор инициализации
                 byte[] bytes = File.ReadAllBytes(UserStorageNameCrypto);
-                byte[] eBytes = dESCryptoServiceProvider.CreateDecryptor(Encoding.UTF8.GetBytes(Key), Encoding.UTF8.GetBytes(IV)).TransformFinalBlock(bytes, 0, bytes.Length);
+                byte[] eBytes = dESCryptoServiceProvider.CreateDecryptor
+                    (Encoding.UTF8.GetBytes(Key), Encoding.UTF8.GetBytes(IV)).
+                        TransformFinalBlock(bytes, 0, bytes.Length);
                 File.WriteAllBytes(UserStorageName, eBytes);
                 string usersText = File.ReadAllText(UserStorageName);
                 users = usersText.SafeDeserialize<List<User>>(null);
@@ -71,7 +73,10 @@ namespace InfoSecurity1.BusinessLogic.Helpers
         {
             // считываем данные из временного файла в зашифрованный, используя ключ и вектор инициализации
             byte[] bytes = File.ReadAllBytes(UserStorageName);
-            byte[] eBytes = dESCryptoServiceProvider.CreateEncryptor(Encoding.UTF8.GetBytes(Key), Encoding.UTF8.GetBytes(IV)).TransformFinalBlock(bytes, 0, bytes.Length);
+            byte[] eBytes = dESCryptoServiceProvider.
+                CreateEncryptor(Encoding.UTF8.GetBytes(Key),
+                    Encoding.UTF8.GetBytes(IV)).
+                        TransformFinalBlock(bytes, 0, bytes.Length);
             File.WriteAllBytes(UserStorageNameCrypto, eBytes);
             //удаляем временный файл
             if(File.Exists(UserStorageName))
